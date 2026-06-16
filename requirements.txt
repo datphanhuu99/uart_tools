@@ -1,0 +1,4 @@
+pyserial
+textual
+pyyaml
+rich

@@ -1,0 +1,15 @@
+- name: SET_MOTOR_CONFIG
+  msg_id: 0x10
+  direction: tx
+  payload:
+    - name: motor_id
+      type: uint8
+      enum:
+        0: left
+        1: right
+    - name: max_rpm
+      type: uint16
+      endian: little
+    - name: accel
+      type: uint16
+      endian: little

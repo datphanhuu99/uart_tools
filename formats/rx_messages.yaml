@@ -1,0 +1,23 @@
+- name: ERROR_REPORT
+  msg_id: 0x81
+  direction: rx
+  payload:
+    - name: error_code
+      type: uint16
+      endian: little
+      map: error_codes
+
+- name: MOTOR_STATUS
+  msg_id: 0x82
+  direction: rx
+  payload:
+    - name: motor_id
+      type: uint8
+      enum:
+        0: left
+        1: right
+    - name: current_rpm
+      type: int16
+      endian: little
+    - name: temperature
+      type: int8

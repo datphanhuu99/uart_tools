@@ -1,102 +1,118 @@
 from textual.app import App
 from ui.terminal_screen import TerminalScreen
 from ui.config_screen import ConfigScreen
-from uart.serial_manager import SerialManager
-from uart.rx_worker import RXWorker
-from protocol.format_loader import FormatLoader
-from protocol.value_mapper import ValueMapper
-from protocol.packer import Packer
-from protocol.parser import Parser
-from uart.frame_codec import FrameCodec
-import threading
+from ui.command_manager_screen import CommandManagerScreen
+from uart.controller import UARTController
 
 class UARTToolApp(App):
+    """
+    Main Textual TUI Application for the UART ECU tool.
+    Acts as the presentation layer, delegating logic, state management,
+    and serial/protocol operations to the UARTController coordinator.
+    """
     BINDINGS = [
         ("f1", "switch_screen('terminal')", "Terminal"),
         ("f2", "switch_screen('config')", "Config"),
+        ("f3", "switch_screen('cmd_manager')", "Commands"),
         ("q", "quit", "Quit"),
     ]
     
     SCREENS = {
         "terminal": TerminalScreen,
         "config": ConfigScreen,
+        "cmd_manager": CommandManagerScreen,
     }
 
-    def __init__(self, port, baudrate):
+    def __init__(self, port: str, baudrate: int):
+        """
+        Initialize the UI application and its UARTController.
+        """
         super().__init__()
-        self.serial_manager = SerialManager(port, baudrate)
-        self.format_loader = FormatLoader("formats")
-        self.format_loader.load_all()
-        self.value_mapper = ValueMapper(self.format_loader)
-        self.packer = Packer()
-        self.parser = Parser()
-        self.rx_worker = RXWorker(self.serial_manager, 
-                                  on_message_received=self.on_message_received,
-                                  on_raw_received=self.on_raw_received)
+        self.controller = UARTController(port, baudrate)
+        # Register UI callbacks with the controller
+        self.controller.register_callbacks(
+            on_message_received=self.on_message_received,
+            on_raw_received=self.on_raw_received,
+            on_status_changed=self.on_status_changed
+        )
 
     def on_mount(self):
+        """
+        Lifecycle event triggered when application mounts.
+        Initiates serial connection through the controller.
+        """
         self.push_screen("terminal")
-        success, msg = self.serial_manager.connect()
-        term = self.get_screen("terminal")
-        if success:
-            term.append_log("STATUS", f"Connected to {self.serial_manager.port}", "green")
-            self.rx_worker.start()
-        else:
-            term.append_log("ERROR", f"Failed to connect: {msg}", "red")
+        self.controller.connect()
 
     def on_unmount(self):
-        self.rx_worker.stop()
-        self.serial_manager.disconnect()
+        """
+        Lifecycle event triggered when application unmounts.
+        Ensures clean teardown of serial connections and worker threads.
+        """
+        self.controller.disconnect()
 
-    def action_switch_screen(self, screen_name):
+    def action_switch_screen(self, screen_name: str) -> None:
+        """
+        Action method to transition between different UI screens.
+        """
         self.push_screen(screen_name)
 
-    def send_text(self, text):
-        data = text.encode('utf-8') + b'\r\n'
-        self.serial_manager.send_raw(data)
-        term = self.get_screen("terminal")
-        term.append_log("TX", text, "blue")
+    def send_text(self, text: str) -> None:
+        """
+        Send raw text through the controller.
+        """
+        self.controller.send_text(text)
 
-    def send_command(self, cmd_name, values):
-        cmd_def = self.format_loader.get_command(cmd_name)
-        payload = self.packer.pack(cmd_def, values)
-        frame = FrameCodec.pack(cmd_def['msg_id'], payload)
-        self.serial_manager.send_raw(frame)
-        
-        term = self.get_screen("terminal")
-        term.append_log("TX", f"Command: {cmd_name} | Values: {values}", "blue")
+    def send_command(self, cmd_name: str, values: dict) -> None:
+        """
+        Send formatted command structured payload through the controller.
+        """
+        self.controller.send_command(cmd_name, values)
         self.notify(f"Sent {cmd_name}")
 
-    def on_message_received(self, msg_id, payload):
-        msg_def = self.format_loader.get_rx_message(msg_id)
+    def on_message_received(self, msg_id: int, msg_def: dict, mapped_values: dict) -> None:
+        """
+        Callback handler called by controller when a valid message frame is parsed.
+        """
         term = self.get_screen("terminal")
         
         if msg_def:
-            parsed_values = self.parser.parse(msg_def, payload)
-            mapped_values = {k: self.value_mapper.map_value(v, next(f for f in msg_def['payload'] if f['name'] == k)) 
-                             for k, v in parsed_values.items()}
-            
             tag = "RX"
             color = "cyan"
-            if "ERROR" in msg_def['name']:
+            if "ERROR" in msg_def.get('name', ''):
                 tag = "ERROR"
                 color = "red"
             
             msg_str = f"{msg_def['name']} | {mapped_values}"
             self.call_from_thread(term.append_log, tag, msg_str, color)
         else:
-            self.call_from_thread(term.append_log, "RX", f"Unknown Msg ID: 0x{msg_id:02X} | Payload: {payload.hex()}", "yellow")
+            self.call_from_thread(term.append_log, "RX", f"Unknown Msg ID: 0x{msg_id:02X}", "yellow")
 
-    def on_raw_received(self, data):
-        # Optional: display raw text if it looks like ASCII
+    def on_raw_received(self, data: bytes) -> None:
+        """
+        Callback handler called by controller when raw serial bytes are received.
+        """
         try:
             text = data.decode('utf-8').strip()
             if text and all(32 <= ord(c) <= 126 or c in '\r\n' for c in text):
                 term = self.get_screen("terminal")
                 self.call_from_thread(term.append_log, "RX", text, "white")
-        except:
+        except Exception:
+            pass
+
+    def on_status_changed(self, tag: str, message: str, color: str) -> None:
+        """
+        Callback handler called by controller when status changes.
+        """
+        try:
+            term = self.get_screen("terminal")
+            self.call_from_thread(term.append_log, tag, message, color)
+        except Exception:
             pass
             
     def call_from_thread(self, func, *args, **kwargs):
-        # Textual is not thread-safe for direct widget updates, but call_from_thread helps
+        """
+        Thread-safe helper to schedule UI operations on the main Textual event loop.
+        """
         self.call_later(func, *args, **kwargs)
+

@@ -18,6 +18,8 @@ class TerminalScreen(Screen):
         yield RichLog(highlight=True, markup=True, max_lines=10000, id="rx_log")
         with Horizontal(id="input_area"):
             yield Input(placeholder="Type text and press Enter to send...", id="tx_input")
+            yield Button("Send", id="send_btn", variant="primary")
+            yield Button("Pause RX", id="rx_toggle_btn", variant="warning")
             yield Button("Copy Log", id="copy_btn", variant="default")
         yield Footer()
 
@@ -30,11 +32,16 @@ class TerminalScreen(Screen):
         input_area.styles.align = ("left", "middle")
         
         tx_input = self.query_one("#tx_input")
-        tx_input.styles.width = "85%"
+        tx_input.styles.width = "1fr"
+        
+        send_btn = self.query_one("#send_btn")
+        send_btn.styles.width = "auto"
+        
+        rx_toggle_btn = self.query_one("#rx_toggle_btn")
+        rx_toggle_btn.styles.width = "auto"
         
         copy_btn = self.query_one("#copy_btn")
-        copy_btn.styles.width = "15%"
-        copy_btn.styles.min_width = 12
+        copy_btn.styles.width = "auto"
 
     def append_log(self, tag, message, color="white"):
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -50,16 +57,40 @@ class TerminalScreen(Screen):
         is_at_bottom = log_widget.scroll_y >= log_widget.max_scroll_y
         log_widget.write(f"[{timestamp}] [{color}]{tag}[/{color}] {message}", scroll_end=is_at_bottom)
 
+    def send_terminal_input(self):
+        tx_input = self.query_one("#tx_input")
+        text = tx_input.value
+        if text:
+            self.app.send_text(text)
+            tx_input.value = ""
+
     def on_input_submitted(self, event: Input.Submitted):
         if event.input.id == "tx_input":
-            text = event.value
-            if text:
-                self.app.send_text(text)
-                event.input.value = ""
+            self.send_terminal_input()
 
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "copy_btn":
             self.action_copy_log()
+        elif event.button.id == "send_btn":
+            self.send_terminal_input()
+        elif event.button.id == "rx_toggle_btn":
+            self.toggle_rx()
+
+    def toggle_rx(self):
+        worker = self.app.controller.rx_worker
+        worker.paused = not worker.paused
+        
+        btn = self.query_one("#rx_toggle_btn")
+        if worker.paused:
+            btn.label = "Resume RX"
+            btn.variant = "success"
+            self.append_log("STATUS", "RX Listening Paused", "yellow")
+            self.app.notify("RX Listening Paused")
+        else:
+            btn.label = "Pause RX"
+            btn.variant = "warning"
+            self.append_log("STATUS", "RX Listening Resumed", "green")
+            self.app.notify("RX Listening Resumed")
 
     def action_copy_log(self):
         log_text = "\n".join(self.log_history)

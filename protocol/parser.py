@@ -1,6 +1,10 @@
 import struct
 
 class Parser:
+    """
+    Deserializes raw binary data payloads into structured dictionaries
+    containing parsed field variables.
+    """
     TYPE_MAP = {
         'uint8': ('B', 1),
         'int8': ('b', 1),
@@ -12,6 +16,16 @@ class Parser:
     }
 
     def parse(self, msg_def: dict, payload: bytes) -> dict:
+        """
+        Unpack binary bytes into structured data dictionary using message templates.
+        
+        Args:
+            msg_def: Dictionary defining template fields, types, and endianness.
+            payload: Inner payload bytes to deserialize.
+            
+        Returns:
+            Dictionary mapped by field names to parsed numeric values.
+        """
         payload_def = msg_def.get('payload', [])
         results = {}
         offset = 0
@@ -32,3 +46,4 @@ class Parser:
             offset += size
             
         return results
+

@@ -8,11 +8,19 @@ import os
 class ConfigScreen(Screen):
     def compose(self):
         yield Header()
-        with Horizontal():
+        with Horizontal(id="protocol_settings_area"):
+            yield Label("Protocol: ")
+            yield Select([("Legacy (0xAA 0x55)", "legacy"), ("COBS", "cobs")], value="legacy", id="protocol_select")
+            yield Label("  CRC Type: ")
+            yield Select([("CRC16 1-Byte", "crc16_1b"), ("CRC16 2-Byte", "crc16_2b"), ("CRC8", "crc8"), ("Checksum", "checksum")], value="crc16_1b", id="crc_select")
+            yield Label("  Endian: ")
+            yield Select([("Big Endian", "big"), ("Little Endian", "little")], value="big", id="endian_select")
+            
+        with Horizontal(id="cmd_select_area"):
             yield Label("Select Command: ")
             yield Select([], id="cmd_select")
         
-        with Horizontal():
+        with Horizontal(id="preset_select_area"):
             yield Label("Select Preset:  ")
             yield Select([], id="preset_select")
         
@@ -24,11 +32,24 @@ class ConfigScreen(Screen):
         yield Footer()
 
     def on_mount(self):
+        # Style the layout areas to look premium and aligned
+        settings_area = self.query_one("#protocol_settings_area")
+        settings_area.styles.height = "auto"
+        settings_area.styles.align = ("left", "middle")
+        settings_area.styles.margin = (0, 0, 1, 0)
+        
+        # Give Select dropdowns a fixed width so they don't overflow the horizontal layout
+        for select in self.query("#protocol_settings_area Select"):
+            select.styles.width = 22
+            
+        self.query_one("#cmd_select_area").styles.height = "auto"
+        self.query_one("#preset_select_area").styles.height = "auto"
+        
         self.update_commands()
         self.update_presets()
 
     def update_commands(self):
-        commands = self.app.format_loader.commands
+        commands = self.app.controller.format_loader.commands
         options = [(name, name) for name in commands.keys()]
         self.query_one("#cmd_select").options = options
 
@@ -41,7 +62,13 @@ class ConfigScreen(Screen):
         self.query_one("#preset_select").options = options
 
     def on_select_changed(self, event: Select.Changed):
-        if event.select.id == "cmd_select":
+        if event.select.id in ["protocol_select", "crc_select", "endian_select"]:
+            mode = self.query_one("#protocol_select").value
+            crc = self.query_one("#crc_select").value
+            endian = self.query_one("#endian_select").value
+            self.app.controller.set_protocol_config(mode, crc, endian)
+            self.app.notify(f"Protocol updated: {mode.upper()} ({crc}, {endian})")
+        elif event.select.id == "cmd_select":
             self.render_fields(event.value)
         elif event.select.id == "preset_select":
             self.load_preset(event.value)
@@ -50,8 +77,15 @@ class ConfigScreen(Screen):
         if not preset_file:
             return
         path = os.path.join("presets", preset_file)
-        with open(path, "r") as f:
-            preset_data = yaml.safe_load(f)
+        try:
+            with open(path, "r") as f:
+                preset_data = yaml.safe_load(f)
+            if not preset_data or not isinstance(preset_data, dict):
+                self.app.notify(f"Invalid preset data in {preset_file}", severity="error")
+                return
+        except Exception as e:
+            self.app.notify(f"Failed to read preset: {e}", severity="error")
+            return
         
         cmd_name = preset_data.get('command')
         self.query_one("#cmd_select").value = cmd_name
@@ -61,7 +95,7 @@ class ConfigScreen(Screen):
         container = self.query_one("#fields_container")
         container.query("*").remove()
         
-        cmd_def = self.app.format_loader.get_command(cmd_name)
+        cmd_def = self.app.controller.format_loader.get_command(cmd_name)
         if not cmd_def:
             return
             
@@ -69,7 +103,7 @@ class ConfigScreen(Screen):
             initial = None
             if preset_values:
                 initial = preset_values.get(field['name'])
-            container.mount(FieldInput(field, self.app.value_mapper, initial_value=initial))
+            container.mount(FieldInput(field, self.app.controller.value_mapper, initial_value=initial))
 
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "send_btn":
@@ -85,7 +119,7 @@ class ConfigScreen(Screen):
         values = {}
         for field_input in self.query(FieldInput):
             raw_val = field_input.get_value()
-            mapped_val = self.app.value_mapper.unmap_value(raw_val, field_input.field_def)
+            mapped_val = self.app.controller.value_mapper.unmap_value(raw_val, field_input.field_def)
             values[field_input.field_name] = mapped_val
             
         self.app.send_command(cmd_name, values)

@@ -7,7 +7,8 @@ def main():
     parser = argparse.ArgumentParser(description="UART Terminal Tool for ECU Communication")
     parser.add_argument("--port", type=str, default="/dev/ttyUSB0", help="Serial port (e.g., /dev/ttyUSB0)")
     parser.add_argument("--baudrate", type=int, default=115200, help="Baudrate (e.g., 9600, 115200, 921600)")
-    parser.add_argument("--mouse", action="store_true", help="Enable TUI mouse tracking (disables native terminal selection unless holding Shift)")
+    parser.add_argument("--no-mouse", action="store_false", dest="mouse", help="Disable TUI mouse tracking (restores native terminal selection)")
+    parser.set_defaults(mouse=True)
     
     args = parser.parse_args()
     

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "grill-me": {
+      "source": "tkersey/dotfiles",
+      "sourceType": "github",
+      "skillPath": "codex/skills/grill-me/SKILL.md",
+      "computedHash": "7bbb8cd5a846938ccba27860e7eefb3672bb40c5a5964a5e66143e4840fa2d5f"
+    }
+  }
+}

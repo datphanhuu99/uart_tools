@@ -1,10 +1,24 @@
 class ValueMapper:
+    """
+    Translates raw numeric packet values to meaningful string labels,
+    and vice-versa, using the lookup maps loaded from YAML configs.
+    """
     def __init__(self, loader):
+        """
+        Initialize the ValueMapper with a FormatLoader.
+        """
         self.loader = loader
 
     def map_value(self, value, field_def):
         """
-        Map a raw numeric value to a string if map or enum is defined.
+        Translate a raw numeric value to a string description if a map or enum is defined.
+        
+        Args:
+            value: Raw numeric data value.
+            field_def: Dictionary defining the field specification.
+            
+        Returns:
+            Mapped string description, or the raw value itself if no mapping is found.
         """
         # Check for enum
         if 'enum' in field_def:
@@ -21,7 +35,14 @@ class ValueMapper:
 
     def unmap_value(self, value_str, field_def):
         """
-        Map a string back to a numeric value for packing.
+        Translate a user-provided string back to its corresponding numeric value for packing.
+        
+        Args:
+            value_str: The input string or custom number string to convert.
+            field_def: Dictionary defining the field specification.
+            
+        Returns:
+            Mapped numeric representation.
         """
         if 'enum' in field_def:
             enum_map = field_def['enum']
@@ -53,3 +74,4 @@ class ValueMapper:
                 return float(value_str)
             except (ValueError, TypeError):
                 return 0
+

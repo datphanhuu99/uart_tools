@@ -1,6 +1,10 @@
 import struct
 
 class Packer:
+    """
+    Serializes a dictionary of field values into structured raw binary payloads
+    according to specified command templates.
+    """
     TYPE_MAP = {
         'uint8': 'B',
         'int8': 'b',
@@ -12,6 +16,16 @@ class Packer:
     }
 
     def pack(self, command_def: dict, values: dict) -> bytes:
+        """
+        Serialize input variables into binary byte sequences based on field rules.
+        
+        Args:
+            command_def: Dictionary defining the template fields, types, and endianness.
+            values: Key-value mapped parameters to pack.
+            
+        Returns:
+            Packaged binary data payload.
+        """
         payload_def = command_def.get('payload', [])
         packed_data = bytearray()
         
@@ -32,3 +46,4 @@ class Packer:
                 packed_data.extend(struct.pack(f"{prefix}{fmt}", 0))
                 
         return bytes(packed_data)
+

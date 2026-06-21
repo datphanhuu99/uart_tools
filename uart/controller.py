@@ -128,26 +128,39 @@ class UARTController:
                 self.on_message_received_cb(msg_id, {}, {})
             return
 
-        parsed_values = self.parser.parse(msg_def, payload)
-        mapped_values = {}
-        
-        # Safely map parsed values, preventing StopIteration if definitions don't match
-        payload_fields = msg_def.get('payload', [])
-        for field_name, val in parsed_values.items():
-            # Find the matching field definition structure
-            field_def = None
-            for f in payload_fields:
-                if f.get('name') == field_name:
-                    field_def = f
-                    break
+        try:
+            # Calculate expected payload size to detect mismatches
+            payload_fields = msg_def.get('payload', [])
+            expected_size = sum(self.parser.TYPE_MAP.get(f['type'], ('B', 1))[1] for f in payload_fields)
+            if len(payload) < expected_size:
+                raise ValueError(f"Payload too short (expected {expected_size} bytes, got {len(payload)} bytes)")
+
+            parsed_values = self.parser.parse(msg_def, payload)
+            mapped_values = {}
             
-            if field_def:
-                mapped_values[field_name] = self.value_mapper.map_value(val, field_def)
-            else:
-                mapped_values[field_name] = val
+            # Safely map parsed values, preventing StopIteration if definitions don't match
+            for field_name, val in parsed_values.items():
+                # Find the matching field definition structure
+                field_def = None
+                for f in payload_fields:
+                    if f.get('name') == field_name:
+                        field_def = f
+                        break
                 
-        if self.on_message_received_cb:
-            self.on_message_received_cb(msg_id, msg_def, mapped_values)
+                if field_def:
+                    mapped_values[field_name] = self.value_mapper.map_value(val, field_def)
+                else:
+                    mapped_values[field_name] = val
+                    
+            if self.on_message_received_cb:
+                self.on_message_received_cb(msg_id, msg_def, mapped_values)
+        except Exception as e:
+            if self.on_message_received_cb:
+                self.on_message_received_cb(
+                    msg_id,
+                    {"name": "PARSE_ERROR", "error_msg": str(e)},
+                    {}
+                )
 
     def _internal_on_raw_received(self, data: bytes) -> None:
         """

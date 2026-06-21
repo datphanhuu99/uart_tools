@@ -80,6 +80,13 @@ class UARTToolApp(App):
         term = self.get_screen("terminal")
         
         if msg_def:
+            if "PARSE_ERROR" in msg_def.get('name', ''):
+                tag = "ERROR"
+                color = "red"
+                msg_str = f"Parse failed for Msg 0x{msg_id:02X}: {msg_def.get('error_msg', '')}"
+                self.call_from_thread(term.append_log, tag, msg_str, color)
+                return
+
             tag = "RX"
             color = "cyan"
             if "ERROR" in msg_def.get('name', ''):

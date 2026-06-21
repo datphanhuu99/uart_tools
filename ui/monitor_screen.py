@@ -62,6 +62,15 @@ class MonitorScreen(Screen):
         table.zebra_stripes = True
         table.styles.height = "1fr"
 
+        # Populate initial rows from cached latest_values
+        for name, data in self.latest_values.items():
+            table.add_row(
+                data['msg_name'],
+                name,
+                str(data['value']),
+                data['details']
+            )
+
         self.update_commands()
 
     def update_commands(self):
@@ -128,17 +137,23 @@ class MonitorScreen(Screen):
                     'details': f"{field['type']} ({field.get('endian', 'little')})"
                 }
         
-        # Clear and redraw the rows of the DataTable
-        table = self.query_one("#monitor_table", DataTable)
-        table.clear(columns=False)
-        
-        for name, data in self.latest_values.items():
-            table.add_row(
-                data['msg_name'],
-                name,
-                str(data['value']),
-                data['details']
-            )
+        # Only update the table UI if the screen is active and mounted
+        if not self.is_mounted:
+            return
+
+        try:
+            table = self.query_one("#monitor_table", DataTable)
+            table.clear(columns=False)
+            
+            for name, data in self.latest_values.items():
+                table.add_row(
+                    data['msg_name'],
+                    name,
+                    str(data['value']),
+                    data['details']
+                )
+        except Exception:
+            pass
 
     def clear_monitor(self):
         """Clear cached parameter values and empty the monitor table."""

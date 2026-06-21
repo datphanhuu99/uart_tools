@@ -11,6 +11,112 @@ class UARTToolApp(App):
     Acts as the presentation layer, delegating logic, state management,
     and serial/protocol operations to the UARTController coordinator.
     """
+    CSS = """
+    /* App-wide stylesheet */
+    
+    /* General Button styling */
+    Button {
+        height: 1;
+        min-width: 8;
+        padding: 0 2;
+        border: none;
+    }
+    
+    /* Hover and focus states */
+    Button:focus {
+        border: solid green;
+    }
+
+    /* Enhance dark/default variant button colors */
+    Button.-default {
+        background: #444444;
+        color: #ffffff;
+    }
+    
+    Button.-default:hover {
+        background: #555555;
+    }
+    
+    Button.-default:focus {
+        background: #666666;
+        color: #ffffff;
+    }
+    
+    /* Tiny Delete 'X' button styling */
+    .del-field-btn {
+        min-width: 3;
+        width: 3;
+        height: 1;
+        padding: 0;
+        border: none;
+        margin-left: 1;
+    }
+    
+    /* Field row controls and align */
+    FieldInput {
+        height: auto;
+        margin-bottom: 1;
+    }
+    
+    .field-input-row {
+        height: auto;
+        align: left middle;
+    }
+    
+    FieldInput .field-label {
+        width: 18;
+        text-align: right;
+        margin-right: 2;
+    }
+    
+    FieldInput Select, FieldInput Input {
+        width: 1fr;
+    }
+    
+    .field-desc {
+        color: #888888;
+        margin-left: 20;
+        text-style: italic;
+    }
+    
+    .field-detail-desc {
+        color: #888888;
+        text-style: italic;
+        margin-left: 4;
+    }
+    
+    /* Specific button sizes on config screen */
+    #send_btn {
+        width: 16;
+        margin-right: 2;
+    }
+    
+    #save_btn {
+        width: 16;
+    }
+    
+    /* Specific button sizes on terminal screen */
+    #input_area Button {
+        margin-left: 1;
+    }
+    
+    /* Command Manager edit form buttons */
+    #save_form_btn {
+        width: 14;
+        margin-right: 2;
+    }
+    
+    #cancel_form_btn {
+        width: 14;
+    }
+    
+    #add_field_btn {
+        width: 16;
+        margin-top: 1;
+        margin-bottom: 1;
+    }
+    """
+    
     BINDINGS = [
         ("f1", "switch_screen('terminal')", "Terminal"),
         ("f2", "switch_screen('config')", "Config"),

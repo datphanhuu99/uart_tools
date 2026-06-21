@@ -20,7 +20,7 @@ class MonitorScreen(Screen):
             with Vertical(id="left_panel"):
                 yield Label("[bold cyan]Command Sender (TX)[/bold cyan]\n")
                 yield Label("Select Command:")
-                yield Select([], id="cmd_select", prompt="Choose Command")
+                yield Select([], id="cmd_select", prompt="Choose Command", allow_blank=True)
                 yield Label("\nPayload Fields:")
                 yield ScrollableContainer(id="fields_container")
                 yield Button("Send Command", id="send_btn", variant="primary")

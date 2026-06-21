@@ -131,6 +131,8 @@ class CommandManagerScreen(Screen):
                 if 'map' in field:
                     field_str += f" | Map: {field['map']}"
                 widgets_to_mount.append(Label(field_str))
+                if 'description' in field and field['description']:
+                    widgets_to_mount.append(Label(f"    └ Hint: {field['description']}", classes="field-detail-desc"))
                 
         # Buttons area
         btn_area = Horizontal(
@@ -240,32 +242,53 @@ class CommandManagerScreen(Screen):
             ("float", "float")
         ]
         initial_type = field_def['type'] if field_def else "uint8"
-        type_select = Select(type_options, value=initial_type, classes="field-type-sel")
+        type_select = Select(type_options, value=initial_type, classes="field-type-sel", allow_blank=True)
         type_select.styles.width = "1fr"
         
         # Endian Select
         endian_options = [("Little Endian", "little"), ("Big Endian", "big")]
         initial_endian = field_def.get('endian', 'little') if field_def else 'little'
-        endian_select = Select(endian_options, value=initial_endian, classes="field-endian-sel")
+        endian_select = Select(endian_options, value=initial_endian, classes="field-endian-sel", allow_blank=True)
         endian_select.styles.width = "1fr"
         
         # Delete Button
-        del_btn = Button("X", variant="error", id=f"del_field_{field_id}")
+        del_btn = Button("X", variant="error", id=f"del_field_{field_id}", classes="del-field-btn")
         del_btn.styles.width = "auto"
         
-        row = Horizontal(
+        # Description Input
+        initial_desc = field_def.get('description', '') if field_def else ''
+        desc_input = Input(value=initial_desc, placeholder="Description / Hint (optional)", classes="field-desc-in")
+        desc_input.styles.width = "1fr"
+        
+        attrs_row = Horizontal(
             field_name_input,
             type_select,
             endian_select,
             del_btn,
+            classes="form-field-attrs"
+        )
+        attrs_row.styles.height = "auto"
+        attrs_row.styles.align = ("left", "middle")
+        
+        desc_row = Horizontal(
+            desc_input,
+            classes="form-field-desc-row"
+        )
+        desc_row.styles.height = "auto"
+        desc_row.styles.align = ("left", "middle")
+        desc_row.styles.margin = (0, 0, 1, 0)
+        desc_row.styles.padding = (0, 0, 0, 2)
+        
+        block = Vertical(
+            attrs_row,
+            desc_row,
             id=f"field_row_{field_id}",
             classes="form-field-row"
         )
-        row.styles.height = "auto"
-        row.styles.align = ("left", "middle")
-        row.styles.margin = (0, 0, 1, 0)
+        block.styles.height = "auto"
+        block.styles.margin = (0, 0, 1, 0)
         
-        return row
+        return block
 
     async def add_field_row(self, field_def=None):
         container = self.query_one("#form_fields_list")
@@ -331,15 +354,19 @@ class CommandManagerScreen(Screen):
             f_name = row.query_one(".field-name-in").value.strip()
             f_type = row.query_one(".field-type-sel").value
             f_endian = row.query_one(".field-endian-sel").value
+            f_desc = row.query_one(".field-desc-in").value.strip()
             
             if not f_name:
                 continue
                 
-            payload.append({
+            field_entry = {
                 'name': f_name,
                 'type': f_type,
                 'endian': f_endian
-            })
+            }
+            if f_desc:
+                field_entry['description'] = f_desc
+            payload.append(field_entry)
             
         # If we are editing, delete the old one first in case name or ID changed
         if not self.selected_cmd:

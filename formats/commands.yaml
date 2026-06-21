@@ -1,88 +1,83 @@
 - name: CMD_HELP
-  msg_id: 0x00
+  msg_id: 0
   direction: tx
-
 - name: CMD_ST_BOOT
-  msg_id: 0x01
+  msg_id: 1
   direction: tx
-
 - name: CMD_ST_CFG_GET
-  msg_id: 0x02
+  msg_id: 2
   direction: tx
-
 - name: CMD_ST_CFG_DEFAULT
-  msg_id: 0x03
+  msg_id: 3
   direction: tx
-
 - name: CMD_ST_CFG_EXAMPLE
-  msg_id: 0x04
+  msg_id: 4
   direction: tx
-
 - name: CMD_ST_CFG_SET
-  msg_id: 0x05
+  msg_id: 5
   direction: tx
   payload:
-    - name: field_id
-      type: uint8
-      enum:
-        0: device_id
-        1: feature_flags
-        2: undervoltage_mv
-        3: overvoltage_mv
-        4: overcurrent_ma
-        5: overtemp_cdeg
-    - name: value
-      type: uint32
-      endian: big
-
+  - name: field_id
+    type: uint8
+    enum:
+      0: device_id
+      1: feature_flags
+      2: undervoltage_mv
+      3: overvoltage_mv
+      4: overcurrent_ma
+      5: overtemp_cdeg
+  - name: value
+    type: uint32
+    endian: big
 - name: CMD_ST_FAULT_ADD
-  msg_id: 0x06
+  msg_id: 6
   direction: tx
   payload:
-    - name: fault_code
-      type: uint16
-      endian: big
-
+  - name: fault_code
+    type: uint16
+    endian: big
 - name: CMD_ST_FAULT_LIST
-  msg_id: 0x07
+  msg_id: 7
   direction: tx
-
 - name: CMD_IMU_WHOAMI
-  msg_id: 0x08
+  msg_id: 8
   direction: tx
-
 - name: CMD_IMU_PWR
-  msg_id: 0x09
+  msg_id: 9
   direction: tx
-
 - name: CMD_IMU_STATUS
-  msg_id: 0x0a
+  msg_id: 10
   direction: tx
-
 - name: CMD_IMU_RAWHEX
-  msg_id: 0x0b
+  msg_id: 11
   direction: tx
-
 - name: CMD_IMU_RAW_STREAM
-  msg_id: 0x0c
+  msg_id: 12
   direction: tx
   payload:
-    - name: duration_sec
-      type: uint32
-      endian: big
-
+  - name: duration_sec
+    type: uint32
+    endian: big
 - name: CMD_IMU_SETPWR
-  msg_id: 0x0d
+  msg_id: 13
   direction: tx
   payload:
-    - name: mode
-      type: uint8
-      enum:
-        0: sleep
-        1: standby
-        2: accel_lp
-        3: gyro_lp
-        4: 6axis_lp
-        5: accel_ln
-        6: gyro_ln
-        7: 6axis_ln
+  - name: mode
+    type: uint8
+    enum:
+      0: sleep
+      1: standby
+      2: accel_lp
+      3: gyro_lp
+      4: 6axis_lp
+      5: accel_ln
+      6: gyro_ln
+      7: 6axis_ln
+- name: RESP_IMU_SETPWR
+  msg_id: 13
+  direction: tx
+  payload:
+  - name: status
+    type: uint8
+    endian: big
+    description: new test 1 seetin 2

@@ -18,11 +18,11 @@ class ConfigScreen(Screen):
             
         with Horizontal(id="cmd_select_area"):
             yield Label("Select Command: ")
-            yield Select([], id="cmd_select")
+            yield Select([], id="cmd_select", allow_blank=True)
         
         with Horizontal(id="preset_select_area"):
             yield Label("Select Preset:  ")
-            yield Select([], id="preset_select")
+            yield Select([], id="preset_select", allow_blank=True)
         
         yield ScrollableContainer(id="fields_container")
         

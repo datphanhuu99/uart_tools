@@ -26,12 +26,12 @@ class UARTToolApp(App):
         "monitor": MonitorScreen,
     }
 
-    def __init__(self, port: str, baudrate: int):
+    def __init__(self, port: str, baudrate: int, rtscts: bool = False):
         """
         Initialize the UI application and its UARTController.
         """
         super().__init__()
-        self.controller = UARTController(port, baudrate)
+        self.controller = UARTController(port, baudrate, rtscts)
         # Register UI callbacks with the controller
         self.controller.register_callbacks(
             on_message_received=self.on_message_received,

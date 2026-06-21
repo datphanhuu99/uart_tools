@@ -15,11 +15,11 @@ class UARTController:
     and underlying components like SerialManager, FrameCodec, and Packer/Parser.
     """
 
-    def __init__(self, port: Optional[str] = None, baudrate: int = 115200, formats_dir: str = "formats"):
+    def __init__(self, port: Optional[str] = None, baudrate: int = 115200, rtscts: bool = False, formats_dir: str = "formats"):
         """
         Initialize the UART controller and its constituent sub-modules.
         """
-        self.serial_manager = SerialManager(port, baudrate)
+        self.serial_manager = SerialManager(port, baudrate, rtscts)
         self.frame_codec = FrameCodec()
         
         # Load protocols from YAML files

@@ -9,18 +9,20 @@ class SerialManager:
     Handles establishing connections, disconnection, transmission,
     reception, and logging of hexadecimal and ASCII operations to log files.
     """
-    def __init__(self, port=None, baudrate=115200, log_dir="logs"):
+    def __init__(self, port=None, baudrate=115200, rtscts=False, log_dir="logs"):
         """
         Initialize SerialManager settings.
         
         Args:
             port: String name of the serial port (e.g. /dev/ttyUSB0).
             baudrate: Port baudrate speed (default 115200).
+            rtscts: Enable hardware RTS/CTS flow control.
             log_dir: Directory to save connection log output.
         """
         self.ser = None
         self.port = port
         self.baudrate = baudrate
+        self.rtscts = rtscts
         self.log_dir = log_dir
         self.is_connected = False
         
@@ -28,7 +30,7 @@ class SerialManager:
             os.makedirs(log_dir)
             
         self.log_file = os.path.join(log_dir, f"uart_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
-
+ 
     def connect(self):
         """
         Open the configured serial interface and verify connectivity.
@@ -37,9 +39,9 @@ class SerialManager:
             A tuple of (success_boolean, status_message_string).
         """
         try:
-            self.ser = serial.Serial(self.port, self.baudrate, timeout=0.1)
+            self.ser = serial.Serial(self.port, self.baudrate, rtscts=self.rtscts, timeout=0.1)
             self.is_connected = True
-            self.log(f"[STATUS] Connected to {self.port} at {self.baudrate} baud")
+            self.log(f"[STATUS] Connected to {self.port} at {self.baudrate} baud (RTS/CTS: {self.rtscts})")
             return True, "Connected"
         except Exception as e:
             self.is_connected = False

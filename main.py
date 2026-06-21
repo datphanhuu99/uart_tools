@@ -7,6 +7,7 @@ def main():
     parser = argparse.ArgumentParser(description="UART Terminal Tool for ECU Communication")
     parser.add_argument("--port", type=str, default="/dev/ttyUSB0", help="Serial port (e.g., /dev/ttyUSB0)")
     parser.add_argument("--baudrate", type=int, default=115200, help="Baudrate (e.g., 9600, 115200, 921600)")
+    parser.add_argument("--rtscts", action="store_true", help="Enable hardware flow control (RTS/CTS)")
     parser.add_argument("--no-mouse", action="store_false", dest="mouse", help="Disable TUI mouse tracking (restores native terminal selection)")
     parser.set_defaults(mouse=True)
     
@@ -20,7 +21,7 @@ def main():
     if not os.path.exists("logs"):
         os.makedirs("logs")
 
-    app = UARTToolApp(port=args.port, baudrate=args.baudrate)
+    app = UARTToolApp(port=args.port, baudrate=args.baudrate, rtscts=args.rtscts)
     app.run(mouse=args.mouse)
 
 if __name__ == "__main__":

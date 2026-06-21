@@ -1,6 +1,6 @@
 import struct
 import logging
-from uart.crc import crc16_modbus, crc8_ccitt, checksum8
+from uart.crc import crc16_modbus, crc8_ccitt, checksum8, crc16_ccitt
 from uart.cobs import cobs_encode, cobs_decode
 
 HEAD_1 = 0xAA
@@ -19,8 +19,8 @@ class FrameCodec:
         Initialize the FrameCodec with default protocol modes and configurations.
         """
         self.buffer = bytearray()
-        self.protocol_mode = "legacy"  # "legacy" or "cobs"
-        self.cobs_crc_type = "crc16_1b"  # "crc16_1b", "crc16_2b", "crc8", "checksum"
+        self.protocol_mode = "cobs"  # "legacy" or "cobs"
+        self.cobs_crc_type = "crc16_2b"  # "crc16_1b", "crc16_2b", "crc8", "checksum"
         self.cobs_endian = "big"       # "big" or "little"
 
     def pack(self, msg_id: int, payload: bytes) -> bytes:
@@ -48,10 +48,10 @@ class FrameCodec:
             
             # Calculate CRC
             if self.cobs_crc_type == "crc16_1b":
-                crc_val = crc16_modbus(packet_to_crc) & 0xFF
+                crc_val = crc16_ccitt(packet_to_crc) & 0xFF
                 crc_bytes = bytes([crc_val])
             elif self.cobs_crc_type == "crc16_2b":
-                crc_val = crc16_modbus(packet_to_crc)
+                crc_val = crc16_ccitt(packet_to_crc)
                 crc_bytes = struct.pack(f'{prefix}H', crc_val)
             elif self.cobs_crc_type == "crc8":
                 crc_val = crc8_ccitt(packet_to_crc)
@@ -152,13 +152,13 @@ class FrameCodec:
                     packet_to_crc = decoded[0:3+payload_len]
                     if crc_size == 1:
                         if self.cobs_crc_type == "crc16_1b":
-                            expected_crc = bytes([crc16_modbus(packet_to_crc) & 0xFF])
+                            expected_crc = bytes([crc16_ccitt(packet_to_crc) & 0xFF])
                         elif self.cobs_crc_type == "crc8":
                             expected_crc = bytes([crc8_ccitt(packet_to_crc)])
                         else: # checksum
                             expected_crc = bytes([checksum8(packet_to_crc)])
                     elif crc_size == 2:
-                        expected_crc = struct.pack(len_fmt, crc16_modbus(packet_to_crc))
+                        expected_crc = struct.pack(len_fmt, crc16_ccitt(packet_to_crc))
                     else:
                         expected_crc = b""
                         

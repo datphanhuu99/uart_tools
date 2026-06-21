@@ -10,9 +10,9 @@ class ConfigScreen(Screen):
         yield Header()
         with Horizontal(id="protocol_settings_area"):
             yield Label("Protocol: ")
-            yield Select([("Legacy (0xAA 0x55)", "legacy"), ("COBS", "cobs")], value="legacy", id="protocol_select")
+            yield Select([("Legacy (0xAA 0x55)", "legacy"), ("COBS", "cobs")], value="cobs", id="protocol_select")
             yield Label("  CRC Type: ")
-            yield Select([("CRC16 1-Byte", "crc16_1b"), ("CRC16 2-Byte", "crc16_2b"), ("CRC8", "crc8"), ("Checksum", "checksum")], value="crc16_1b", id="crc_select")
+            yield Select([("CRC16 1-Byte", "crc16_1b"), ("CRC16 2-Byte", "crc16_2b"), ("CRC8", "crc8"), ("Checksum", "checksum")], value="crc16_2b", id="crc_select")
             yield Label("  Endian: ")
             yield Select([("Big Endian", "big"), ("Little Endian", "little")], value="big", id="endian_select")
             

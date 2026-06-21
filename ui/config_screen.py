@@ -51,7 +51,10 @@ class ConfigScreen(Screen):
     def update_commands(self):
         commands = self.app.controller.format_loader.commands
         options = [(name, name) for name in commands.keys()]
-        self.query_one("#cmd_select").options = options
+        try:
+            self.query_one("#cmd_select", Select).set_options(options)
+        except Exception:
+            pass
 
     def update_presets(self):
         preset_dir = "presets"
@@ -59,7 +62,10 @@ class ConfigScreen(Screen):
             return
         files = [f for f in os.listdir(preset_dir) if f.endswith(".yaml")]
         options = [(f, f) for f in files]
-        self.query_one("#preset_select").options = options
+        try:
+            self.query_one("#preset_select", Select).set_options(options)
+        except Exception:
+            pass
 
     def on_select_changed(self, event: Select.Changed):
         if event.select.id in ["protocol_select", "crc_select", "endian_select"]:

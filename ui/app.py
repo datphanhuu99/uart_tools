@@ -2,6 +2,7 @@ from textual.app import App
 from ui.terminal_screen import TerminalScreen
 from ui.config_screen import ConfigScreen
 from ui.command_manager_screen import CommandManagerScreen
+from ui.monitor_screen import MonitorScreen
 from uart.controller import UARTController
 
 class UARTToolApp(App):
@@ -14,6 +15,7 @@ class UARTToolApp(App):
         ("f1", "switch_screen('terminal')", "Terminal"),
         ("f2", "switch_screen('config')", "Config"),
         ("f3", "switch_screen('cmd_manager')", "Commands"),
+        ("f4", "switch_screen('monitor')", "Monitor"),
         ("q", "quit", "Quit"),
     ]
     
@@ -21,6 +23,7 @@ class UARTToolApp(App):
         "terminal": TerminalScreen,
         "config": ConfigScreen,
         "cmd_manager": CommandManagerScreen,
+        "monitor": MonitorScreen,
     }
 
     def __init__(self, port: str, baudrate: int):
@@ -85,6 +88,13 @@ class UARTToolApp(App):
             
             msg_str = f"{msg_def['name']} | {mapped_values}"
             self.call_from_thread(term.append_log, tag, msg_str, color)
+            
+            # Also forward to MonitorScreen if loaded
+            try:
+                monitor = self.get_screen("monitor")
+                self.call_from_thread(monitor.update_message, msg_def, mapped_values)
+            except Exception:
+                pass
         else:
             self.call_from_thread(term.append_log, "RX", f"Unknown Msg ID: 0x{msg_id:02X}", "yellow")
 

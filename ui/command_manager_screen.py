@@ -394,3 +394,8 @@ class CommandManagerScreen(Screen):
             config_scr.update_commands()
         except Exception:
             pass
+        try:
+            monitor_scr = self.app.get_screen("monitor")
+            monitor_scr.update_commands()
+        except Exception:
+            pass

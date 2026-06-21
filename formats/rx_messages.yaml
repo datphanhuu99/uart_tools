@@ -1,23 +1,257 @@
-- name: ERROR_REPORT
-  msg_id: 0x81
+- name: RESP_ST_BOOT
+  msg_id: 0x01
   direction: rx
   payload:
-    - name: error_code
+    - name: boot_count
+      type: uint32
+      endian: big
+
+- name: RESP_ST_CFG_GET
+  msg_id: 0x02
+  direction: rx
+  payload:
+    - name: device_id
+      type: uint32
+      endian: little
+    - name: feature_flags
+      type: uint32
+      endian: little
+    - name: undervoltage_mv
       type: uint16
       endian: little
-      map: error_codes
-
-- name: MOTOR_STATUS
-  msg_id: 0x82
-  direction: rx
-  payload:
-    - name: motor_id
-      type: uint8
-      enum:
-        0: left
-        1: right
-    - name: current_rpm
+    - name: overvoltage_mv
+      type: uint16
+      endian: little
+    - name: overcurrent_ma
+      type: uint16
+      endian: little
+    - name: overtemp_cdeg
       type: int16
       endian: little
-    - name: temperature
-      type: int8
+
+- name: RESP_ST_CFG_DEFAULT
+  msg_id: 0x03
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: error
+
+- name: RESP_ST_CFG_EXAMPLE
+  msg_id: 0x04
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: error
+
+- name: RESP_ST_CFG_SET
+  msg_id: 0x05
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: error
+        2: len_too_short
+        3: invalid_field
+
+- name: RESP_ST_FAULT_ADD
+  msg_id: 0x06
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: error
+        2: len_too_short
+
+- name: RESP_ST_FAULT_LIST
+  msg_id: 0x07
+  direction: rx
+  payload:
+    - name: count
+      type: uint8
+    # Fault 0
+    - name: f0_code
+      type: uint16
+      endian: little
+    - name: f0_reserved
+      type: uint16
+      endian: little
+    - name: f0_boot
+      type: uint32
+      endian: little
+    - name: f0_time
+      type: uint32
+      endian: little
+    # Fault 1
+    - name: f1_code
+      type: uint16
+      endian: little
+    - name: f1_reserved
+      type: uint16
+      endian: little
+    - name: f1_boot
+      type: uint32
+      endian: little
+    - name: f1_time
+      type: uint32
+      endian: little
+    # Fault 2
+    - name: f2_code
+      type: uint16
+      endian: little
+    - name: f2_reserved
+      type: uint16
+      endian: little
+    - name: f2_boot
+      type: uint32
+      endian: little
+    - name: f2_time
+      type: uint32
+      endian: little
+    # Fault 3
+    - name: f3_code
+      type: uint16
+      endian: little
+    - name: f3_reserved
+      type: uint16
+      endian: little
+    - name: f3_boot
+      type: uint32
+      endian: little
+    - name: f3_time
+      type: uint32
+      endian: little
+
+- name: RESP_IMU_WHOAMI
+  msg_id: 0x08
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: read_error
+    - name: who_am_i
+      type: uint8
+
+- name: RESP_IMU_PWR
+  msg_id: 0x09
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: read_error
+    - name: power_mode
+      type: uint8
+
+- name: RESP_IMU_STATUS
+  msg_id: 0x0a
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: read_error
+    - name: int_status
+      type: uint8
+
+- name: RESP_IMU_RAWHEX
+  msg_id: 0x0b
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: read_error
+    - name: accel_x
+      type: int16
+      endian: big
+    - name: accel_y
+      type: int16
+      endian: big
+    - name: accel_z
+      type: int16
+      endian: big
+    - name: gyro_x
+      type: int16
+      endian: big
+    - name: gyro_y
+      type: int16
+      endian: big
+    - name: gyro_z
+      type: int16
+      endian: big
+
+- name: RESP_IMU_RAW_STREAM
+  msg_id: 0x0c
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: sensor_error
+        2: len_too_short
+        3: invalid_duration
+    - name: power_mode
+      type: uint8
+    - name: accel_config0
+      type: uint8
+    - name: gyro_config0
+      type: uint8
+
+- name: STREAM_IMU_DATA
+  msg_id: 0x8c
+  direction: rx
+  payload:
+    - name: accel_x
+      type: int16
+      endian: big
+    - name: accel_y
+      type: int16
+      endian: big
+    - name: accel_z
+      type: int16
+      endian: big
+    - name: gyro_x
+      type: int16
+      endian: big
+    - name: gyro_y
+      type: int16
+      endian: big
+    - name: gyro_z
+      type: int16
+      endian: big
+
+- name: RESP_IMU_SETPWR
+  msg_id: 0x0d
+  direction: rx
+  payload:
+    - name: status
+      type: uint8
+      enum:
+        0: success
+        1: sensor_error
+        2: len_too_short
+        3: invalid_mode
+
+- name: RESP_HEARTBEAT
+  msg_id: 0x0e
+  direction: rx
+  payload:
+    - name: uptime_ms
+      type: uint32
+      endian: big

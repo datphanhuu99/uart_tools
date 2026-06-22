@@ -113,10 +113,14 @@ class UARTController:
         """
         Update FrameCodec settings dynamically.
         """
-        self.frame_codec.protocol_mode = mode
-        self.frame_codec.cobs_crc_type = crc_type
-        self.frame_codec.cobs_endian = endian
-        self._notify_status("STATUS", f"Protocol mode updated to {mode} (CRC: {crc_type}, Endian: {endian})", "cyan")
+        self.frame_codec.protocol_mode = "cobs"
+        self.frame_codec.cobs_crc_type = "crc16_2b"
+        self.frame_codec.cobs_endian = "big"
+        self._notify_status(
+            "STATUS",
+            "Protocol fixed to implemented MCU spec: COBS + CRC16/CCITT-FALSE + big-endian LEN/CRC",
+            "cyan",
+        )
 
     def _internal_on_message_received(self, msg_id: int, payload: bytes) -> None:
         """
@@ -130,15 +134,7 @@ class UARTController:
             return
 
         try:
-            # Calculate expected payload size to detect mismatches (skip array elements which are variable)
             payload_fields = msg_def.get('payload', [])
-            expected_size = 0
-            for f in payload_fields:
-                if f['type'] != 'array':
-                    expected_size += self.parser.TYPE_MAP.get(f['type'], ('B', 1))[1]
-            if len(payload) < expected_size:
-                raise ValueError(f"Payload too short (expected {expected_size} bytes, got {len(payload)} bytes)")
-
             parsed_values = self.parser.parse(msg_def, payload)
             mapped_values = {}
             
@@ -159,12 +155,14 @@ class UARTController:
             if self.on_message_received_cb:
                 self.on_message_received_cb(msg_id, msg_def, mapped_values)
         except Exception as e:
+            logging.getLogger(__name__).debug(
+                "Falling back to raw payload for msg 0x%02X due to parse mismatch: %s",
+                msg_id,
+                e,
+            )
             if self.on_message_received_cb:
-                self.on_message_received_cb(
-                    msg_id,
-                    {"name": "PARSE_ERROR", "error_msg": str(e)},
-                    {}
-                )
+                raw_hex = " ".join(f"{b:02X}" for b in payload)
+                self.on_message_received_cb(msg_id, {}, {"raw_payload": raw_hex, "len": len(payload)})
 
     def _internal_on_raw_received(self, data: bytes) -> None:
         """

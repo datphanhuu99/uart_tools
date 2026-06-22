@@ -40,30 +40,14 @@ class FrameCodec:
             crc_data = struct.pack('BB', msg_id, length) + payload
             crc = crc16_modbus(crc_data)
             return header + payload + struct.pack('<H', crc)
-        else:
-            # COBS packaging format: cmd(1B) + len(2B) + data(nB) + crc(1B or 2B)
-            prefix = '>' if self.cobs_endian == 'big' else '<'
-            header = struct.pack(f'{prefix}BH', msg_id, len(payload))
-            packet_to_crc = header + payload
-            
-            # Calculate CRC
-            if self.cobs_crc_type == "crc16_1b":
-                crc_val = crc16_ccitt(packet_to_crc) & 0xFF
-                crc_bytes = bytes([crc_val])
-            elif self.cobs_crc_type == "crc16_2b":
-                crc_val = crc16_ccitt(packet_to_crc)
-                crc_bytes = struct.pack(f'{prefix}H', crc_val)
-            elif self.cobs_crc_type == "crc8":
-                crc_val = crc8_ccitt(packet_to_crc)
-                crc_bytes = bytes([crc_val])
-            elif self.cobs_crc_type == "checksum":
-                crc_val = checksum8(packet_to_crc)
-                crc_bytes = bytes([crc_val])
-            else:
-                crc_bytes = b""
-                
-            raw_packet = packet_to_crc + crc_bytes
-            return cobs_encode(raw_packet)
+
+        # Implemented MCU protocol is fixed to:
+        # 0x00 + COBS(CMD + LEN_BE + PAYLOAD + CRC16_CCITT_FALSE_BE) + 0x00
+        header = struct.pack(">BH", msg_id, len(payload))
+        packet_to_crc = header + payload
+        crc_bytes = struct.pack(">H", crc16_ccitt(packet_to_crc))
+        raw_packet = packet_to_crc + crc_bytes
+        return b"\x00" + cobs_encode(raw_packet)
 
     def unpack(self, data: bytes):
         """
@@ -122,50 +106,34 @@ class FrameCodec:
                     # Invalid CRC, skip HEAD1 and search again
                     del self.buffer[0:1]
         else:
-            # COBS mode: packages end with 0x00
             while 0x00 in self.buffer:
                 idx = self.buffer.index(0x00)
-                frame = bytes(self.buffer[:idx + 1])
+                frame = bytes(self.buffer[:idx])
                 del self.buffer[:idx + 1]
-                
-                if len(frame) <= 1:
-                    continue  # consecutive 0x00 or empty frame
-                
+
+                if not frame:
+                    continue
+
                 try:
                     decoded = cobs_decode(frame)
-                    crc_size = 2 if self.cobs_crc_type == "crc16_2b" else (0 if self.cobs_crc_type == "none" else 1)
-                    min_len = 1 + 2 + crc_size
+                    min_len = 1 + 2 + 2
                     if len(decoded) < min_len:
                         continue
-                    
+
                     cmd = decoded[0]
-                    len_fmt = '>H' if self.cobs_endian == 'big' else '<H'
-                    payload_len = struct.unpack(len_fmt, decoded[1:3])[0]
-                    
-                    if len(decoded) != 1 + 2 + payload_len + crc_size:
-                        continue  # Length mismatch
-                    
-                    payload = decoded[3:3+payload_len]
-                    received_crc = decoded[3+payload_len:3+payload_len+crc_size]
-                    
-                    # Verify CRC
-                    packet_to_crc = decoded[0:3+payload_len]
-                    if crc_size == 1:
-                        if self.cobs_crc_type == "crc16_1b":
-                            expected_crc = bytes([crc16_ccitt(packet_to_crc) & 0xFF])
-                        elif self.cobs_crc_type == "crc8":
-                            expected_crc = bytes([crc8_ccitt(packet_to_crc)])
-                        else: # checksum
-                            expected_crc = bytes([checksum8(packet_to_crc)])
-                    elif crc_size == 2:
-                        expected_crc = struct.pack(len_fmt, crc16_ccitt(packet_to_crc))
-                    else:
-                        expected_crc = b""
-                        
+                    payload_len = struct.unpack(">H", decoded[1:3])[0]
+                    expected_len = 1 + 2 + payload_len + 2
+                    if len(decoded) != expected_len:
+                        continue
+
+                    payload = decoded[3:3 + payload_len]
+                    received_crc = decoded[3 + payload_len:expected_len]
+                    packet_to_crc = decoded[:3 + payload_len]
+                    expected_crc = struct.pack(">H", crc16_ccitt(packet_to_crc))
+
                     if received_crc == expected_crc:
                         messages.append((cmd, payload))
                 except Exception as e:
                     logger.debug("Failed to decode COBS packet: %s", e)
-                    
-        return messages
 
+        return messages

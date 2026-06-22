@@ -27,6 +27,9 @@
   - name: overtemp_cdeg
     type: int16
     endian: little
+  - name: reserved
+    type: bytes
+    length: 24
 - name: RESP_ST_CFG_DEFAULT
   msg_id: 3
   direction: rx
@@ -72,54 +75,22 @@
   payload:
   - name: count
     type: uint8
-  - name: f0_code
-    type: uint16
-    endian: little
-  - name: f0_reserved
-    type: uint16
-    endian: little
-  - name: f0_boot
-    type: uint32
-    endian: little
-  - name: f0_time
-    type: uint32
-    endian: little
-  - name: f1_code
-    type: uint16
-    endian: little
-  - name: f1_reserved
-    type: uint16
-    endian: little
-  - name: f1_boot
-    type: uint32
-    endian: little
-  - name: f1_time
-    type: uint32
-    endian: little
-  - name: f2_code
-    type: uint16
-    endian: little
-  - name: f2_reserved
-    type: uint16
-    endian: little
-  - name: f2_boot
-    type: uint32
-    endian: little
-  - name: f2_time
-    type: uint32
-    endian: little
-  - name: f3_code
-    type: uint16
-    endian: little
-  - name: f3_reserved
-    type: uint16
-    endian: little
-  - name: f3_boot
-    type: uint32
-    endian: little
-  - name: f3_time
-    type: uint32
-    endian: little
+  - name: faults
+    type: array
+    count_field: count
+    fields:
+    - name: fault_code
+      type: uint16
+      endian: little
+    - name: reserved0
+      type: uint16
+      endian: little
+    - name: boot_count
+      type: uint32
+      endian: little
+    - name: timestamp_ms
+      type: uint32
+      endian: little
 - name: RESP_IMU_WHOAMI
   msg_id: 8
   direction: rx
@@ -236,6 +207,7 @@
     type: uint8
   - name: faults
     type: array
+    count_field: count
     fields:
     - name: fault_code
       type: uint16

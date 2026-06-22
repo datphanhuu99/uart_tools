@@ -56,7 +56,7 @@
   direction: tx
   payload:
   - name: duration_sec
-    type: uint32
+    type: uint16
     endian: big
 - name: CMD_IMU_SETPWR
   msg_id: 13

@@ -226,3 +226,23 @@
   - name: uptime_ms
     type: uint32
     endian: big
+- name: RESP_ST_FAULT_EXPORT
+  msg_id: 15
+  direction: rx
+  payload:
+  - name: status
+    type: uint8
+  - name: count
+    type: uint8
+  - name: faults
+    type: array
+    fields:
+    - name: fault_code
+      type: uint16
+      endian: big
+    - name: boot_count
+      type: uint32
+      endian: big
+    - name: timestamp_ms
+      type: uint32
+      endian: big

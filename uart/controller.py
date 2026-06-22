@@ -125,13 +125,17 @@ class UARTController:
         msg_def = self.format_loader.get_rx_message(msg_id)
         if not msg_def:
             if self.on_message_received_cb:
-                self.on_message_received_cb(msg_id, {}, {})
+                raw_hex = " ".join(f"{b:02X}" for b in payload)
+                self.on_message_received_cb(msg_id, {}, {"raw_payload": raw_hex, "len": len(payload)})
             return
 
         try:
-            # Calculate expected payload size to detect mismatches
+            # Calculate expected payload size to detect mismatches (skip array elements which are variable)
             payload_fields = msg_def.get('payload', [])
-            expected_size = sum(self.parser.TYPE_MAP.get(f['type'], ('B', 1))[1] for f in payload_fields)
+            expected_size = 0
+            for f in payload_fields:
+                if f['type'] != 'array':
+                    expected_size += self.parser.TYPE_MAP.get(f['type'], ('B', 1))[1]
             if len(payload) < expected_size:
                 raise ValueError(f"Payload too short (expected {expected_size} bytes, got {len(payload)} bytes)")
 

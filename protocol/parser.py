@@ -35,6 +35,30 @@ class Parser:
             type_str = field['type']
             endian = field.get('endian', 'little')
             
+            if type_str == 'array':
+                results[name] = []
+                fields_def = field.get('fields', [])
+                if not fields_def:
+                    continue
+                while True:
+                    # check if we have enough bytes for one more record
+                    record_size = sum(self.TYPE_MAP.get(f['type'], ('B', 1))[1] for f in fields_def)
+                    if offset + record_size > len(payload):
+                        break
+                    
+                    record = {}
+                    for f in fields_def:
+                        f_name = f['name']
+                        f_type = f['type']
+                        f_endian = f.get('endian', 'little')
+                        fmt, size = self.TYPE_MAP.get(f_type, ('B', 1))
+                        prefix = '<' if f_endian == 'little' else '>'
+                        value = struct.unpack_from(f"{prefix}{fmt}", payload, offset)[0]
+                        record[f_name] = value
+                        offset += size
+                    results[name].append(record)
+                continue
+
             fmt, size = self.TYPE_MAP.get(type_str, ('B', 1))
             
             if offset + size > len(payload):

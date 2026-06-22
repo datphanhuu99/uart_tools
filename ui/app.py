@@ -209,7 +209,10 @@ class UARTToolApp(App):
             except Exception:
                 pass
         else:
-            self.call_from_thread(term.append_log, "RX", f"Unknown Msg ID: 0x{msg_id:02X}", "yellow")
+            raw_payload = mapped_values.get("raw_payload", "")
+            payload_len = mapped_values.get("len", 0)
+            msg_str = f"cmd: 0x{msg_id:02X} | len: {payload_len} | data: {raw_payload}"
+            self.call_from_thread(term.append_log, "RX", msg_str, "yellow")
 
     def on_raw_received(self, data: bytes) -> None:
         """

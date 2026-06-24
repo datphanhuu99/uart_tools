@@ -154,6 +154,7 @@
 - name: RESP_IMU_RAW_STREAM
   msg_id: 12
   direction: rx
+  payload_len: 4
   payload:
   - name: status
     type: uint8
@@ -169,8 +170,9 @@
   - name: gyro_config0
     type: uint8
 - name: STREAM_IMU_DATA
-  msg_id: 140
+  msg_id: 12
   direction: rx
+  payload_len: 12
   payload:
   - name: accel_x
     type: int16
@@ -190,6 +192,16 @@
   - name: gyro_z
     type: int16
     endian: big
+- name: RESP_IMU_RAW_STREAM_STOP
+  msg_id: 140
+  direction: rx
+  payload_len: 1
+  payload:
+  - name: reason
+    type: uint8
+    enum:
+      1: duration_elapsed
+      2: sensor_error
 - name: RESP_HEARTBEAT
   msg_id: 14
   direction: rx

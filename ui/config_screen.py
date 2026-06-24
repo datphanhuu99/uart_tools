@@ -1,6 +1,6 @@
 from textual.screen import Screen
 from textual.widgets import Select, Button, Label, Header, Footer
-from textual.containers import Vertical, Horizontal, ScrollableContainer
+from textual.containers import Horizontal, ScrollableContainer
 from ui.widgets import FieldInput
 import yaml
 import os
@@ -9,12 +9,10 @@ class ConfigScreen(Screen):
     def compose(self):
         yield Header()
         with Horizontal(id="protocol_settings_area"):
-            yield Label("Protocol: ")
-            yield Select([("Legacy (0xAA 0x55)", "legacy"), ("COBS", "cobs")], value="cobs", id="protocol_select")
-            yield Label("  CRC Type: ")
-            yield Select([("CRC16 1-Byte", "crc16_1b"), ("CRC16 2-Byte", "crc16_2b"), ("CRC8", "crc8"), ("Checksum", "checksum")], value="crc16_2b", id="crc_select")
-            yield Label("  Endian: ")
-            yield Select([("Big Endian", "big"), ("Little Endian", "little")], value="big", id="endian_select")
+            yield Label("Protocol: ECU implemented spec")
+            yield Label("  Framing: 0x00 + COBS + 0x00")
+            yield Label("  CRC: CRC16/CCITT-FALSE")
+            yield Label("  Header: CMD + LEN_BE")
             
         with Horizontal(id="cmd_select_area"):
             yield Label("Select Command: ")
@@ -38,10 +36,6 @@ class ConfigScreen(Screen):
         settings_area.styles.align = ("left", "middle")
         settings_area.styles.margin = (0, 0, 1, 0)
         
-        # Give Select dropdowns a fixed width so they don't overflow the horizontal layout
-        for select in self.query("#protocol_settings_area Select"):
-            select.styles.width = 22
-            
         self.query_one("#cmd_select_area").styles.height = "auto"
         self.query_one("#preset_select_area").styles.height = "auto"
         
@@ -68,13 +62,7 @@ class ConfigScreen(Screen):
             pass
 
     def on_select_changed(self, event: Select.Changed):
-        if event.select.id in ["protocol_select", "crc_select", "endian_select"]:
-            mode = self.query_one("#protocol_select").value
-            crc = self.query_one("#crc_select").value
-            endian = self.query_one("#endian_select").value
-            self.app.controller.set_protocol_config(mode, crc, endian)
-            self.app.notify(f"Protocol updated: {mode.upper()} ({crc}, {endian})")
-        elif event.select.id == "cmd_select":
+        if event.select.id == "cmd_select":
             self.render_fields(event.value)
         elif event.select.id == "preset_select":
             self.load_preset(event.value)

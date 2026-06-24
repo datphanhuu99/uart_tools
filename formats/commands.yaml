@@ -73,14 +73,6 @@
       5: accel_ln
       6: gyro_ln
       7: 6axis_ln
-- name: RESP_IMU_SETPWR
-  msg_id: 13
-  direction: tx
-  payload:
-  - name: status
-    type: uint8
-    endian: big
-    description: new test 1 seetin 2
 - name: CMD_ST_FAULT_EXPORT
   msg_id: 15
   direction: tx

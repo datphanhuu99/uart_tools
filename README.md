@@ -5,7 +5,7 @@ A Python-based terminal tool for ECU communication, featuring a modern Textual T
 ## Features
 
 - **Terminal UI**: Real-time TX/RX display with timestamped logs.
-- **Protocol Frame**: Implements `HEAD_1(0xAA) | HEAD_2(0x55) | MSG_ID | LEN | PAYLOAD | CRC16`.
+- **Protocol Frame**: Implements `0x00 | COBS(CMD | LEN_BE | PAYLOAD | CRC16_BE) | 0x00`.
 - **YAML Definitions**: Define commands (TX) and messages (RX) in simple YAML files.
 - **Dynamic Forms**: Automatically generates a configuration UI for sending commands based on YAML definitions.
 - **Value Mapping**: Translates raw numeric values to human-readable labels (enums and error codes).
@@ -46,6 +46,7 @@ Edit `formats/commands.yaml` to define your ECU commands.
 
 ### RX Messages
 Edit `formats/rx_messages.yaml` to define how incoming frames should be parsed.
+When a `msg_id` has multiple payload layouts, add multiple entries with the same `msg_id` and distinguish them using `payload_len`.
 
 ### Maps
 Edit `formats/maps.yaml` for shared lookup tables (e.g., error codes).

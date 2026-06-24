@@ -126,7 +126,7 @@ class UARTController:
         """
         Internal event handler for incoming unpacked messages. Parses and maps the payload values.
         """
-        msg_def = self.format_loader.get_rx_message(msg_id)
+        msg_def = self.format_loader.get_rx_message(msg_id, len(payload))
         if not msg_def:
             if self.on_message_received_cb:
                 raw_hex = " ".join(f"{b:02X}" for b in payload)

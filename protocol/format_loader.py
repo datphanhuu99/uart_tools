@@ -16,6 +16,7 @@ class FormatLoader:
         self.formats_dir = formats_dir
         self.commands = {}
         self.rx_messages = {}
+        self.rx_message_variants = {}
         self.maps = {}
 
     def load_all(self):
@@ -32,10 +33,20 @@ class FormatLoader:
             
         rx_list = self._load_yaml('rx_messages.yaml')
         if isinstance(rx_list, list):
-            self.rx_messages = {msg['msg_id']: msg for msg in rx_list}
+            self.rx_message_variants = {}
+            for msg in rx_list:
+                self.rx_message_variants.setdefault(msg['msg_id'], []).append(msg)
+            self.rx_messages = {
+                msg_id: variants[0]
+                for msg_id, variants in self.rx_message_variants.items()
+            }
         elif isinstance(rx_list, dict):
             # If msg_id is the key
             self.rx_messages = rx_list
+            self.rx_message_variants = {
+                msg_id: [msg]
+                for msg_id, msg in rx_list.items()
+            }
 
     def _load_yaml(self, filename: str):
         """
@@ -53,11 +64,23 @@ class FormatLoader:
         """
         return self.commands.get(name)
 
-    def get_rx_message(self, msg_id: int):
+    def get_rx_message(self, msg_id: int, payload_len: int | None = None):
         """
         Get RX message definition by Msg ID.
         """
-        return self.rx_messages.get(msg_id)
+        variants = self.rx_message_variants.get(msg_id, [])
+        if not variants:
+            return None
+
+        if payload_len is None or len(variants) == 1:
+            return variants[0]
+
+        for variant in variants:
+            expected_len = variant.get("payload_len")
+            if expected_len == payload_len:
+                return variant
+
+        return variants[0]
         
     def get_map(self, map_name: str):
         """
@@ -77,8 +100,9 @@ class FormatLoader:
             
         # Save RX messages
         rx_path = os.path.join(self.formats_dir, 'rx_messages.yaml')
-        rx_list = list(self.rx_messages.values())
+        rx_list = []
+        for variants in self.rx_message_variants.values():
+            rx_list.extend(variants)
         with open(rx_path, 'w') as f:
             yaml.safe_dump(rx_list, f, sort_keys=False)
-
 

@@ -1,0 +1,20 @@
+app:
+  color_theme: blue
+  language: vi
+  log_level: INFO
+  theme: dark
+ecu_default_config:
+  device_id: 1
+  mode: sport
+  temp_threshold_high: 85.0
+  temp_threshold_low: -10.0
+  update_interval_ms: 100
+  voltage_threshold_high: 16.0
+  voltage_threshold_low: 9.0
+serial:
+  baudrate: 115200
+  bytesize: 8
+  parity: N
+  port: Không tìm thấy
+  stopbits: 1
+  timeout: 1.0

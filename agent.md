@@ -1,38 +1,37 @@
-# Project: art_ecu_firmware - Agent Hub
+# Project: UART Terminal Tool - Agent Hub
 
-> **Hướng dẫn:** File này là trung tâm điều phối hành vi và tư duy của Agent cho toàn dự án.
-> Mọi thay đổi nội quy tại đây phải được xác nhận thông qua quy trình phê duyệt.
+`AGENTS.md` is the canonical entrypoint for agent behavior in this repository. Keep this file as a short
+human-facing index and compatibility note for older workflows that referenced `agent.md`.
 
-## 1. Interaction Protocol (Quy trình tương tác)
-- **Session Start:** Mỗi khi bắt đầu phiên làm việc, Agent PHẢI:
-  1. Đọc `MEMORY.md`.
-  2. Tóm tắt trạng thái dự án dựa trên `docs/session_notes.md`.
-  3. Kiểm tra và đề xuất các cải tiến tool/skill nếu thấy cần thiết.
-- **Plan-Act-Validate:** Trước mọi hành động phức tạp, Agent phải:
-  1. Phân tích ngữ cảnh hệ thống.
-  2. Tạo file `.plan.md` tạm thời.
-  3. Trình bày sơ bộ kế hoạch trong Chat.
-  4. Chờ bạn gõ `/approve` trước khi thực thi.
-- **Rule Management:** Khi cập nhật nội quy, Agent đề xuất thay đổi nội dung file cụ thể (`rules/`), bạn review trong Chat, sau đó Agent mới ghi đè.
-- **Feedback Loop:** Nếu người dùng không hài lòng, Agent PHẢI chủ động hỏi: "Tôi cần cải thiện điều gì để lần sau tốt hơn?" và đề xuất cập nhật vào `MEMORY.md` hoặc `rules/`.
+## 1. Interaction Protocol
 
-## 2. Documentation Standards (Chuẩn tài liệu)
-- **Centralized Docs:** Mọi tài liệu phải lưu trong thư mục `docs/` theo cấu trúc: `docs/<tính_năng>/<loại_tài_liệu>.md`.
-- **Auto-Documentation:** Ngay sau mỗi thay đổi code, Agent cập nhật tài liệu với cấu trúc:
-  - **Functionality:** Chức năng chính.
-  - **TODOs:** Các nhiệm vụ chưa hoàn thành.
-  - **Attention Points:** Điểm cần chú ý khi đọc docs/code.
-  - **System Notes:** (Nếu cần) để cuối file, ghi chú quan trọng cho lần quay lại làm việc.
-- **Context Logging:**
-  - Note cho hệ thống (chung): Lưu tại `docs/session_notes.md`.
-  - Note cho source (riêng): Lưu tại file docs tương ứng của tính năng đó.
+- **Session Start:** Follow the startup order in [AGENTS.md](./AGENTS.md#L1).
+- **Plan-Act-Validate:** For non-trivial changes, define success criteria, state the runtime context, plan the
+  verification path, then implement only the scoped change.
+- **Approval Discipline:** Source code edits require explicit user approval unless the current user turn already
+  asks for the edit. Rule/documentation updates should be described clearly and kept reviewable.
+- **Feedback Loop:** If the user is unhappy with the result, ask what should improve next time and propose an
+  update to [MEMORY.md](./MEMORY.md#L1), [rules/coding.md](./rules/coding.md#L1), or [rules/review.md](./rules/review.md#L1).
 
-## 3. Document Index (Bản đồ tri thức)
+## 2. Documentation Standards
+
+- **Centralized Docs:** Project-specific documentation belongs under `docs/`.
+- **Source of Truth:** Current source and `formats/*.yaml` are authoritative for actual behavior.
+- **Documentation Updates:** After behavior, interface, configuration, protocol, test, or build-flow changes,
+  identify whether docs need an update. If no docs update is needed, say why.
+- **Context Logging:** Put short-lived handoff notes and verification gaps in [docs/session_notes.md](./docs/session_notes.md#L1).
+
+## 3. Document Index
+
+- **Agent Entrypoint:** [AGENTS.md](./AGENTS.md)
+- **RTK Rule:** [RTK.md](./RTK.md)
+- **System Analysis Rules:** [system-rules/](./system-rules/)
 - **Architecture:** [docs/architecture/](./docs/architecture/)
 - **Coding Rules:** [rules/coding.md](./rules/coding.md)
 - **Review Guidelines:** [rules/review.md](./rules/review.md)
 - **Session Notes:** [docs/session_notes.md](./docs/session_notes.md)
 
 ## 4. Operational State
-- **Active Task:** [Cập nhật tại đây]
-- **Persona:** Kỹ thuật, chủ động, tư duy điều phối (orchestrator), tuân thủ tiêu chuẩn nhúng.
+
+- **Active Task:** None recorded here. Use `docs/session_notes.md` for current handoff state.
+- **Persona:** Practical embedded-facing tooling engineer, careful with serial protocols, worker lifetimes, and TUI lifecycle.
